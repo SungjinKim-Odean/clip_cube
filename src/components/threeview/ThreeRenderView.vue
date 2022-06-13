@@ -12,7 +12,8 @@
                         <v-list-item><TooltipedMenuIcon :styleAttr="$styleConfig.mapToolBar.iconButton" icon="mdi-pan" tooltip="Pan mode" :pushed="currentControlMode==='pan'" @click="controlManager.setControlMode(controlMode.Pan)"/></v-list-item>         
                         <v-list-item><TooltipedMenuIcon :styleAttr="$styleConfig.mapToolBar.iconButton" icon="mdi-overscan" tooltip="Fit scene" @click="fitMapToScene()"/></v-list-item>         
                         <v-list-item><TooltipedMenuIcon :styleAttr="$styleConfig.mapToolBar.iconButton" icon="mdi-grid" tooltip="Toggle gridline" :pushed="showGridline" @click="showGridline=!showGridline"/></v-list-item>                        
-                        <v-list-item><TooltipedMenuIcon :styleAttr="$styleConfig.mapToolBar.iconButton" icon="mdi-vector-polyline" tooltip="Clip mode" :pushed="currentControlMode==='measure'" @click="controlManager.setControlMode(controlMode.Measure)"/></v-list-item>                                          
+                        <v-list-item><TooltipedMenuIcon :styleAttr="$styleConfig.mapToolBar.iconButton" icon="mdi-vector-polyline" tooltip="Clip mode" :pushed="currentControlMode==='measure'" @click="controlManager.setControlMode(controlMode.Measure)"/></v-list-item>
+                        <v-list-item><TooltipedMenuIcon :styleAttr="$styleConfig.mapToolBar.iconButton" icon="mdi-content-save" tooltip="Export stl" @click="exportStl"/></v-list-item>                                          
                     </v-list>
                 </v-navigation-drawer>
             </v-col>
@@ -37,7 +38,9 @@ import { OriginMarker } from "./SceneNode/OriginMarker.js"
 import { MapObjectSceneNode } from "./SceneNode/MapObjectSceneNode.js"
 import ThreeControlModeGuide from './ThreeControlModeGuide';
 import TooltipedMenuIcon from "../commonControl/TooltipedMenuIcon";
-
+import { STLExporter } from 'three/examples/jsm/exporters/STLExporter.js';
+import {saveAs} from "file-saver"
+			
 export default {
     name: "ThreeRenderView",
     props: [],
@@ -185,6 +188,31 @@ export default {
             this.meshes = [...meshes];
             this.mapObjectSceneNode.updateData([...this.meshes]);         
         },
+
+        
+
+        save( blob, filename ) {
+            const link = document.createElement( 'a' );
+			link.style.display = 'none';
+			document.body.appendChild( link );
+
+            link.href = URL.createObjectURL( blob );
+            link.download = filename;
+            link.click();
+
+        },
+
+        saveString( text, filename ) {
+
+            
+
+        },
+
+        exportStl() {
+            const result = new STLExporter().parse( this.meshes[0] );
+            saveAs( new Blob( [ result ], { type: 'text/plain' } ), 'clipbox.stl' );
+			//saveString( result, 'clipbox.stl' );
+        }
     },
 
     created() {       
