@@ -62,7 +62,7 @@ var ControlManager = function (renderManager) {
 
 	this.restoreControlMode = function() {
 		// 무조건 기본 모드로 되돌린다.
-		scope.setControlMode(ControlMode.Pick);
+		scope.setControlMode(ControlMode.Rotation);
 	}
 
 	this.setControlModeWithoutReset = function(mode, initialData) {

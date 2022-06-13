@@ -229,7 +229,6 @@ export class MeasureControl {
             }
 
             let triVertices = [pointInWorld[v0], pointInWorld[v1], pointInWorld[v2]];
-            console.log('triVertices', triVertices);
             const geometry = this.getPrismGeometry(triVertices, bottomOffset, topOffset);
             const prismMesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial( { color: '#FF5252', side: THREE.DoubleSide, emissive:0x000000} ));
             prisms.push(prismMesh);
@@ -238,6 +237,8 @@ export class MeasureControl {
         const csg = new CSG();
         csg.subtract([this.renderManager.meshes[0], ...prisms]);
         const resultMesh = csg.toMesh();
+
+        //const wire = new THREE.Mesh(resultMesh.geometry.clone(), new THREE.MeshBasicMaterial( { color: '#FFFFFF', side: THREE.DoubleSide, wireframe:true} ));
 
         const edges = new THREE.EdgesGeometry( resultMesh.geometry );
         const line = new THREE.LineSegments( edges, new THREE.LineBasicMaterial( { color: 0xffffff } ) );
