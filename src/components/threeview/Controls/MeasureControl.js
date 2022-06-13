@@ -184,6 +184,8 @@ export class MeasureControl {
         const p1 = CameraUtil.getWorldCoordinateZ(0, 0, 1, this.renderManager.cameraManager.viewport, this.renderManager.cameraManager.camera);
         const p2 = CameraUtil.getWorldCoordinateZ(0, 0, -1, this.renderManager.cameraManager.viewport, this.renderManager.cameraManager.camera);        
 
+        console.log(p0, p1, p2);
+
         const bottomOffset = new THREE.Vector3().subVectors(p1,p0).multiplyScalar(0.5);
         const topOffset = new THREE.Vector3().subVectors(p2,p0).multiplyScalar(0.5);
 
@@ -192,7 +194,7 @@ export class MeasureControl {
         console.log(`points:`, this.points);
 
         const geometry = this.getPrismGeometry(this.points, bottomOffset, topOffset);
-        const prismMesh = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial( { color: '#2979FF', side: THREE.DoubleSide, emissive:0x000000, wireframe:true } ));
+        const prismMesh = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial( { color: '#2979FF', side: THREE.DoubleSide, emissive:0x000000, wireframe:true, transparent:false, opacity:0.5 } ));
 
         const csg = new CSG();
         csg.subtract([this.renderManager.meshes[0], prismMesh]);
@@ -200,7 +202,11 @@ export class MeasureControl {
         //csg.intersect([box, sphere]);
 
         const resultMesh = csg.toMesh();
-        this.renderManager.updateSceneData([resultMesh, prismMesh]);
+
+        const edges = new THREE.EdgesGeometry( resultMesh.geometry );
+        const line = new THREE.LineSegments( edges, new THREE.LineBasicMaterial( { color: 0xffffff } ) );
+
+        this.renderManager.updateSceneData([resultMesh, line]);
 
         return true;
     }

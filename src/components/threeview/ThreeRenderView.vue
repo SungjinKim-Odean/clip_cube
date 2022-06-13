@@ -28,13 +28,13 @@
 <script>
 import * as THREE from 'three'
 import { Rect } from '../../model/Rect.js'
-import { CameraManager } from '../threeview/CameraManager.js'
-import { ControlManager } from '../threeview/ControlManager.js'
-import { CoordAxes } from '../threeview/SceneNode/CoordAxes.js'
-import { Gridline } from '../threeview/SceneNode/Gridline.js'
+import { CameraManager } from './CameraManager.js'
+import { ControlManager } from './ControlManager.js'
+import { CoordAxes } from './SceneNode/CoordAxes.js'
+import { Gridline } from './SceneNode/Gridline.js'
 import * as ControlMode from "../../model/ControlMode.js";
-import { OriginMarker } from "../threeview/SceneNode/OriginMarker.js"
-import { MapObjectSceneNode } from "../threeview/SceneNode/MapObjectSceneNode.js"
+import { OriginMarker } from "./SceneNode/OriginMarker.js"
+import { MapObjectSceneNode } from "./SceneNode/MapObjectSceneNode.js"
 import ThreeControlModeGuide from './ThreeControlModeGuide';
 import TooltipedMenuIcon from "../commonControl/TooltipedMenuIcon";
 
@@ -89,9 +89,13 @@ export default {
         },
 
         initSolid() {
-            const box = new THREE.Mesh(new THREE.BoxBufferGeometry(1, 1, 1), new THREE.MeshBasicMaterial( { color: '#FF5252', side: THREE.DoubleSide, emissive:0x000000, wireframe:true} ));
+            const box = new THREE.Mesh(new THREE.BoxBufferGeometry(1, 1, 1), new THREE.MeshStandardMaterial( { color: '#FF5252', side: THREE.FrontSide, emissive:0x000000, wireframe:false} ));
             box.position.set(0, 0, 0);
-            this.meshes = [box];
+
+            const edges = new THREE.EdgesGeometry( box.geometry );
+            const line = new THREE.LineSegments( edges, new THREE.LineBasicMaterial( { color: 0xffffff } ) );
+
+            this.meshes = [box, line];
 
             this.mapObjectSceneNode.updateData([...this.meshes]);
             this.fitMapToScene();
@@ -154,7 +158,9 @@ export default {
         },        
         
         fitMapToScene() {
-            this.cameraManager.updateWorldRect(new Rect(-5,-5,10,10), true);
+            const rect = new Rect(-5,-5,10,10);
+            this.cameraManager.updateWorldRect(rect, true);
+            this.gridLine.updateRect(rect, 0xffffff, 1);
         },
 
         rotate(angleDegree) {

@@ -16,7 +16,7 @@
 </template>
 
 <script>
-import ThreeRenderView from "./panels/ThreeRenderView";
+import ThreeRenderView from "./threeview/ThreeRenderView";
 import TooltipedMenuIcon from "./commonControl/TooltipedMenuIcon";
 import moment from 'moment';
 

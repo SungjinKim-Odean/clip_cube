@@ -5,9 +5,6 @@ import { DrawUtil } from '../DrawUtil.js';
 export class MapObjectSceneNode {
     constructor(renderManager) {
         this.renderManager = renderManager;
-        this.pathNodeSizeMeter = 0.5;        
-        this.linkWidthMeter = 0.03;
-
         this.thisScene = new THREE.Scene();
     }
     

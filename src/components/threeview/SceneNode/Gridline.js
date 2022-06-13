@@ -7,17 +7,10 @@ export class Gridline {
         this.thisScene = new THREE.Scene();
     }
 
-    updateMap(map)
+    updateRect(rect, color, gridUnitMeter)
     {
         this.thisScene.clear();
-        if(map == null) {
-            return;
-        }
 
-        let rect = map.rect;
-        let color = new THREE.Color(0x696969);
-        let gridUnitMeter = 10;
-        
         // 원점 기준으로 가시화한다.
         let grids = [];       
         for(let x = 0; x >= rect.minx; x -= gridUnitMeter) {
@@ -39,7 +32,7 @@ export class Gridline {
         var gridNode = new THREE.Object3D();
         for(let i=0; i<grids.length; i++) {
             let lineNode = DrawUtil.createLineNode(grids[i], color, 2);
-            lineNode.material.depthTest = false;
+            lineNode.material.depthTest = true;
             gridNode.add(lineNode);
         }        
 
