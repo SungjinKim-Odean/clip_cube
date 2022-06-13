@@ -103,7 +103,7 @@ var ControlManager = function (renderManager) {
 				scope.domElement.focus ? scope.domElement.focus() : window.focus();
 
 				if (event.button == 2 /* RIGHT */) {					
-					scope.setControlModeWithoutReset(ControlMode.Pan);
+					scope.setControlModeWithoutReset(ControlMode.Rotation);
 				}
 
 				let rect = scope.domElement.getBoundingClientRect();
