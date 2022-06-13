@@ -30,13 +30,21 @@ export class MeasureControl {
 		this.thisScene.add(this.knotsNode);	
 
 		// 마우스 이동 시 마지막 점과 마우스 커서간의 거리 표시를 위한 노드
-		this.guideLineNode = DrawUtil.createDashedCurveNode("curve", 2, 0x0000ff, 1, 3, 1);
+		this.guideLineNode = DrawUtil.createDashedCurveNode("curve", 3, 0x0000ff, 1, 3, 1);
         this.guideLineNode.material.depthTest = false;
         this.thisScene.add(this.guideLineNode);
 	}
 
 	get Mode() { 
         return ControlMode.Measure;
+    }
+
+    getPointInWorld() {
+        return this.points.map(x => CameraUtil.getWorldCoordinateZ(x.x, x.y, 0, this.renderManager.cameraManager.viewport, this.renderManager.cameraManager.camera));
+    }
+
+    getPosition1InWorld() {
+        return this.position1 ? CameraUtil.getWorldCoordinateZ(this.position1.x, this.position1.y, 0, this.renderManager.cameraManager.viewport, this.renderManager.cameraManager.camera) : null;
     }
 
 	onModeEntered() {
@@ -51,7 +59,6 @@ export class MeasureControl {
 	reset() {
         this.points = [];
 		this.renderManager.closeControlModeInfo();
-		//this.spriteNodes.clear();
 		DrawUtil.updateVertices(this.segmentsNode, []);
 		DrawUtil.updateVertices(this.knotsNode, []);
     }	
@@ -63,10 +70,14 @@ export class MeasureControl {
 	}
 
 	updateGuideDrawing() {
-		if(this.points.length > 0 && this.position1 != null) {
-			let p0 = this.points[this.points.length-1].clone();
-			let p1 = this.position1.clone();
-			DrawUtil.updateVertices(this.guideLineNode, [p0, p1]);
+        const pointInWorld = this.getPointInWorld();
+        const position1InWorld = this.getPosition1InWorld();
+
+		if(pointInWorld.length > 0 && position1InWorld != null) {
+			let p0 = pointInWorld[0].clone();
+			let p1 = position1InWorld.clone();
+            let p2 = pointInWorld[pointInWorld.length-1].clone();
+			DrawUtil.updateVertices(this.guideLineNode, [p0, p1, p2]);
 			this.guideLineNode.computeLineDistances();
 		}
 		else {
@@ -76,16 +87,16 @@ export class MeasureControl {
 	}
 	
 	updateDrawing() {
-		
-        if(this.points.length < 3) {
+		const pointInWorld = this.getPointInWorld();
+        if(pointInWorld.length < 3) {
             // draw lines        
-            DrawUtil.updateVertices(this.segmentsNode, this.points);
+            DrawUtil.updateVertices(this.segmentsNode, pointInWorld);
 
             // draw knots
-            DrawUtil.updateVertices(this.knotsNode, this.points);
+            DrawUtil.updateVertices(this.knotsNode, pointInWorld);
         }
         else {
-            let polygon = [...this.points, this.points[0]];
+            let polygon = [...pointInWorld, pointInWorld[0]];
             // draw lines        
             DrawUtil.updateVertices(this.segmentsNode, polygon);
 
@@ -96,7 +107,7 @@ export class MeasureControl {
 
 	handleMouseDown = (event) => {
 		if (event.button == 0 /* LEFT */) {
-			this.points.push(CameraUtil.getWorldCoordinateZ(event.clientX, event.clientY, 0, this.renderManager.cameraManager.viewport, this.renderManager.cameraManager.camera));
+			this.points.push(new THREE.Vector2(event.clientX, event.clientY));
 
 			this.updateDrawing();
 			this.position1 = null;
@@ -106,7 +117,7 @@ export class MeasureControl {
 
 	handleMouseMove (event) {
 		if(this.points.length > 0) {
-			this.position1 = CameraUtil.getWorldCoordinateZ(event.clientX, event.clientY, 0, this.renderManager.cameraManager.viewport, this.renderManager.cameraManager.camera);
+			this.position1 = new THREE.Vector2(event.clientX, event.clientY);
 			this.updateGuideDrawing();
 		}
 	}
@@ -179,6 +190,8 @@ export class MeasureControl {
         if(this.points.length < 3) {
             return false;
         }
+
+        const pointInWorld = this.getPointInWorld();
         
         const p0 = CameraUtil.getWorldCoordinateZ(0, 0, 0, this.renderManager.cameraManager.viewport, this.renderManager.cameraManager.camera);
         const p1 = CameraUtil.getWorldCoordinateZ(0, 0, 1, this.renderManager.cameraManager.viewport, this.renderManager.cameraManager.camera);
@@ -191,9 +204,9 @@ export class MeasureControl {
 
         console.log(`bottomOffset: ${bottomOffset.x}, ${bottomOffset.y}, ${bottomOffset.z}`);
         console.log(`topOffset: ${topOffset.x}, ${topOffset.y}, ${topOffset.z}`);
-        console.log(`points:`, this.points);
+        console.log(`points:`, pointInWorld);
 
-        const geometry = this.getPrismGeometry(this.points, bottomOffset, topOffset);
+        const geometry = this.getPrismGeometry(pointInWorld, bottomOffset, topOffset);
         const prismMesh = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial( { color: '#2979FF', side: THREE.DoubleSide, emissive:0x000000, wireframe:true, transparent:false, opacity:0.5 } ));
 
         const csg = new CSG();
