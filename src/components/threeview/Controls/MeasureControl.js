@@ -4,6 +4,7 @@ import {DrawUtil} from '../DrawUtil'
 import * as ControlMode from '../../../model/ControlMode.js';
 import {Rect} from "../../../model/Rect.js"
 import {CSG} from "../../../CSG/CSG.js";
+import {Earcut} from 'three/src/extras/Earcut.js';
 
 export class MeasureControl {
 
@@ -191,29 +192,51 @@ export class MeasureControl {
             return false;
         }
 
+        const vs = [];
+        this.points.forEach(x => {
+            vs.push(x.x);
+            vs.push(x.y);
+        });
+        var tris = Earcut.triangulate(vs, null, 2);
+        console.log('triangulation result', tris);
+
         const pointInWorld = this.getPointInWorld();
-        
+
         const p0 = CameraUtil.getWorldCoordinateZ(0, 0, 0, this.renderManager.cameraManager.viewport, this.renderManager.cameraManager.camera);
         const p1 = CameraUtil.getWorldCoordinateZ(0, 0, 1, this.renderManager.cameraManager.viewport, this.renderManager.cameraManager.camera);
         const p2 = CameraUtil.getWorldCoordinateZ(0, 0, -1, this.renderManager.cameraManager.viewport, this.renderManager.cameraManager.camera);        
-
-        console.log(p0, p1, p2);
-
         const bottomOffset = new THREE.Vector3().subVectors(p1,p0).multiplyScalar(0.5);
         const topOffset = new THREE.Vector3().subVectors(p2,p0).multiplyScalar(0.5);
 
-        console.log(`bottomOffset: ${bottomOffset.x}, ${bottomOffset.y}, ${bottomOffset.z}`);
-        console.log(`topOffset: ${topOffset.x}, ${topOffset.y}, ${topOffset.z}`);
-        console.log(`points:`, pointInWorld);
+        //console.log(p0, p1, p2);
+        //console.log(`bottomOffset: ${bottomOffset.x}, ${bottomOffset.y}, ${bottomOffset.z}`);
+        //console.log(`topOffset: ${topOffset.x}, ${topOffset.y}, ${topOffset.z}`);
+        //console.log(`points:`, pointInWorld);
 
-        const geometry = this.getPrismGeometry(pointInWorld, bottomOffset, topOffset);
-        const prismMesh = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial( { color: '#2979FF', side: THREE.DoubleSide, emissive:0x000000, wireframe:true, transparent:false, opacity:0.5 } ));
+        const prisms = [];
+        for(let i=0; i<tris.length; i+=3) {
+            let v0 = tris[i+0];
+            let v1 = tris[i+1];
+            let v2 = tris[i+2];
+            let ps = [this.points[v0], this.points[v1], this.points[v2]].map(x => new THREE.Vector3(x.x, x.y, 0));
+            let cross = new THREE.Vector3().crossVectors(new THREE.Vector3().subVectors(ps[1], ps[0]), new THREE.Vector3().subVectors(ps[2], ps[0]));  
+            // 메쉬 와인딩 방향이 반대인 경우, b-rep의 outside를 solid로 인식하기 때문에 와인딩 방향을 정규화해야 함.
+            // TODO: mesh 와인딩 방향 정규화 방법 개선  
+            if(cross.z > 0) {
+                let temp = v2;
+                v2 = v1;
+                v1 = temp;
+            }
+
+            let triVertices = [pointInWorld[v0], pointInWorld[v1], pointInWorld[v2]];
+            console.log('triVertices', triVertices);
+            const geometry = this.getPrismGeometry(triVertices, bottomOffset, topOffset);
+            const prismMesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial( { color: '#FF5252', side: THREE.DoubleSide, emissive:0x000000} ));
+            prisms.push(prismMesh);
+        }
 
         const csg = new CSG();
-        csg.subtract([this.renderManager.meshes[0], prismMesh]);
-        //csg.union([box, sphere, sphereB]);
-        //csg.intersect([box, sphere]);
-
+        csg.subtract([this.renderManager.meshes[0], ...prisms]);
         const resultMesh = csg.toMesh();
 
         const edges = new THREE.EdgesGeometry( resultMesh.geometry );
