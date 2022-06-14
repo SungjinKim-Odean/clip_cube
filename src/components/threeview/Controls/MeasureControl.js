@@ -5,6 +5,7 @@ import * as ControlMode from '../../../model/ControlMode.js';
 import {Rect} from "../../../model/Rect.js"
 import {CSG} from "../../../CSG/CSG.js";
 import {Earcut} from 'three/src/extras/Earcut.js';
+import {BufferGeometryUtils} from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
 export class MeasureControl {
 
@@ -236,7 +237,11 @@ export class MeasureControl {
 
         const csg = new CSG();
         csg.subtract([this.renderManager.meshes[0], ...prisms]);
-        const resultMesh = csg.toMesh();
+        //const resultMesh = csg.toMesh();
+
+        const resultGeometry = BufferGeometryUtils.mergeVertices(csg.toGeometry());
+        const resultMesh = new THREE.Mesh(resultGeometry, new THREE.MeshStandardMaterial( { color: '#FF5252', side: THREE.DoubleSide, emissive:0x000000} ));
+        resultMesh.geometry.computeVertexNormals();        
 
         //const wire = new THREE.Mesh(resultMesh.geometry.clone(), new THREE.MeshBasicMaterial( { color: '#FFFFFF', side: THREE.DoubleSide, wireframe:true} ));
 
